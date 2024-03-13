@@ -1,15 +1,14 @@
 package com.sparta.outsourcing.domain.restaurant.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.springframework.test.util.ReflectionTestUtils.setField;
-
 import com.sparta.outsourcing.domain.member.model.Member;
 import com.sparta.outsourcing.domain.member.model.MemberRole;
 import com.sparta.outsourcing.domain.member.repository.member.MemberRepository;
@@ -21,7 +20,6 @@ import com.sparta.outsourcing.domain.restaurant.entity.Restaurants;
 import com.sparta.outsourcing.domain.restaurant.repository.RestaurantsRepository;
 import com.sparta.outsourcing.global.exception.CustomException;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -34,10 +32,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 //@SpringBootTest
 //// 단위테스트, 통합테스트
 @ExtendWith(MockitoExtension.class)
-class RestaurantsServiceTest {
+class RestaurantsServiceImplTest {
 
   @InjectMocks
-  private RestaurantsService restaurantsService;
+  private RestaurantsServiceImpl restaurantsServiceImpl;
 
   @Mock
   RestaurantsRepository restaurantsRepository;
@@ -62,7 +60,7 @@ class RestaurantsServiceTest {
 
       // when
       Exception exception = assertThrows(CustomException.class, () -> {
-        restaurantsService.createRestaurant(requestDto, member.getEmail());
+        restaurantsServiceImpl.createRestaurant(requestDto, member.getEmail());
       });
       // then
       assertEquals("[CUSTOM ERROR] 해당 유저의 권한이 없습니다.", exception.getMessage());
@@ -83,7 +81,7 @@ class RestaurantsServiceTest {
       given(restaurantsRepository.save(any())).willReturn(restaurants);
 
       // when
-      RestaurantsResponseDto result = restaurantsService.createRestaurant(requestDto,
+      RestaurantsResponseDto result = restaurantsServiceImpl.createRestaurant(requestDto,
           member.getEmail());
 
       // then
@@ -102,11 +100,11 @@ class RestaurantsServiceTest {
       Restaurants restaurants = RestaurantsMockData.getRestaurantEntity();
       given(restaurantsRepository.findById(anyLong())).willReturn(Optional.empty());
       // when
-      Exception exception = assertThrows(NoSuchElementException.class, () -> {
-        restaurantsService.getRestaurant(restaurants.getRestaurantId());
+      Exception exception = assertThrows(CustomException.class, () -> {
+        restaurantsServiceImpl.getRestaurant(restaurants.getRestaurantId());
       });
       // then
-      assertEquals("예외발생!!", exception.getMessage());
+      assertEquals("[CUSTOM ERROR] 가게가 존재하지 않습니다.", exception.getMessage());
     }
 
     @Test
@@ -114,10 +112,9 @@ class RestaurantsServiceTest {
 
       // given
       Restaurants restaurants = RestaurantsMockData.getRestaurantEntity();
-      setField(restaurants, "restaurantId", 8L);
       given(restaurantsRepository.findById(anyLong())).willReturn(Optional.of(restaurants));
       // when
-      RestaurantsResponseDto result = restaurantsService.getRestaurant(
+      RestaurantsResponseDto result = restaurantsServiceImpl.getRestaurant(
           restaurants.getRestaurantId());
       // then
       assertEquals(result.getRestaurantId(), restaurants.getRestaurantId());
@@ -130,7 +127,7 @@ class RestaurantsServiceTest {
       List<Restaurants> restaurantsList = RestaurantsMockData.getRestaurantList();
       given(restaurantsRepository.findAllByOrderByRestaurantId()).willReturn(restaurantsList);
       // when
-      List<RestaurantsResponseDto> result = restaurantsService.getRestaurantList();
+      List<RestaurantsResponseDto> result = restaurantsServiceImpl.getRestaurantList();
       // then
       for (int i = 0; i < 3; i++) {
         assertEquals(result.get(i).getRestaurantId(), restaurantsList.get(i).getRestaurantId());
@@ -154,7 +151,7 @@ class RestaurantsServiceTest {
 
       // when
       Exception exception = assertThrows(CustomException.class, () -> {
-        restaurantsService.updateRestaurant(restaurants.getRestaurantId(), requestDto,
+        restaurantsServiceImpl.updateRestaurant(restaurants.getRestaurantId(), requestDto,
             member.getEmail());
       });
       // then
@@ -175,7 +172,7 @@ class RestaurantsServiceTest {
       given(restaurantsRepository.findById(anyLong())).willReturn(Optional.of(restaurants));
       restaurants.update(requestDto);
       // when
-      RestaurantsResponseDto result = restaurantsService.updateRestaurant(
+      RestaurantsResponseDto result = restaurantsServiceImpl.updateRestaurant(
           restaurants.getRestaurantId(), requestDto,
           member.getEmail());
       // then
@@ -197,7 +194,7 @@ class RestaurantsServiceTest {
       given(memberRepository.findMemberOrElseThrow(anyString())).willReturn(member);
       // when
       Exception exception = assertThrows(CustomException.class, () -> {
-        restaurantsService.deleteRestaurant(restaurants.getRestaurantId(), member.getEmail());
+        restaurantsServiceImpl.deleteRestaurant(restaurants.getRestaurantId(), member.getEmail());
       });
       // then
       assertEquals("[CUSTOM ERROR] 해당 유저의 권한이 없습니다.", exception.getMessage());
@@ -211,9 +208,10 @@ class RestaurantsServiceTest {
       Restaurants restaurants = RestaurantsMockData.getRestaurantEntity();
       Member member = MemberMockData.getMemberAdminRoleEntity();
       given(memberRepository.findMemberOrElseThrow(anyString())).willReturn(member);
+      given(restaurantsRepository.findById(anyLong())).willReturn(Optional.empty());
       // when
       Exception exception = assertThrows(CustomException.class, () -> {
-        restaurantsService.deleteRestaurant(restaurants.getRestaurantId(), member.getEmail());
+        restaurantsServiceImpl.deleteRestaurant(restaurants.getRestaurantId(), member.getEmail());
       });// then
       assertEquals("[CUSTOM ERROR] 가게가 존재하지 않습니다.", exception.getMessage());
 
@@ -229,7 +227,7 @@ class RestaurantsServiceTest {
       given(memberRepository.findMemberOrElseThrow(anyString())).willReturn(member);
       given(restaurantsRepository.findById(anyLong())).willReturn(Optional.of(restaurants));
       // when
-      Long result = restaurantsService.deleteRestaurant(restaurants.getRestaurantId(),
+      Long result = restaurantsServiceImpl.deleteRestaurant(restaurants.getRestaurantId(),
           member.getEmail());
       // then
       assertEquals(result, restaurants.getRestaurantId());
