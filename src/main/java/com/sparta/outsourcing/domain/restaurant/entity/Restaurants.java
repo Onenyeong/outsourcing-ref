@@ -11,6 +11,7 @@ import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.Where;
 import org.springframework.data.annotation.CreatedDate;
@@ -22,7 +23,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 @Table(name = "restaurants")
 @SQLDelete(sql = "update restaurants set deleted = true,deleted_date = NOW() where restaurant_id= ?")
 // deleted_date가 null인 가게만 조회
-
+@NoArgsConstructor
 public class Restaurants {
 
   @Id
@@ -63,6 +64,14 @@ public class Restaurants {
     this.createdDate = LocalDateTime.now();
   }
 
+  public Restaurants(Long restaurantId,String name, String category, String address, String number){
+    this.restaurantId = restaurantId;
+    this.name = name;
+    this.category = category;
+    this.address = address;
+    this.number = number;
+  }
+
   public void update(RestaurantsRequestDto restaurants) {
     this.name = restaurants.getName();
     this.category = restaurants.getCategory();
@@ -71,9 +80,7 @@ public class Restaurants {
     this.updatedDate = LocalDateTime.now();
   }
 
-  public Restaurants() {
 
-  }
 }
 
 
