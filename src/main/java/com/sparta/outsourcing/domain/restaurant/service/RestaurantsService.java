@@ -3,7 +3,6 @@ package com.sparta.outsourcing.domain.restaurant.service;
 import com.sparta.outsourcing.domain.restaurant.dto.RestaurantsRequestDto;
 import com.sparta.outsourcing.domain.restaurant.dto.RestaurantsResponseDto;
 import java.util.List;
-import org.springframework.data.domain.Page;
 
 
 public interface RestaurantsService {
@@ -34,5 +33,5 @@ public interface RestaurantsService {
   long deleteRestaurant(Long restaurantId,String email);
 
 
-  Page<RestaurantsResponseDto> getRestaurantListByPage(int page, int size);
+  List<RestaurantsResponseDto> findAllByRestaurantsPage(int page, int size);
 }

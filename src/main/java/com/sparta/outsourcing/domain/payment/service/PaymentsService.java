@@ -17,9 +17,9 @@ public class PaymentsService {
 
   private final PaymentsJpaRepository paymentsRepository;
 
-
   public PaymentsResponseDto getPayment(Long id) {
     Payments payments = findByPaymentId(id);
+
     PaymentsResponseDto paymentsResponseDto = new PaymentsResponseDto(payments);
     return paymentsResponseDto;
   }

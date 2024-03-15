@@ -27,4 +27,5 @@ public class GlobalExceptionHandler {
   ) {
     return CommonResponseDto.of(HttpStatus.BAD_REQUEST, "잘못 입력하셨습니다.", null);
   }
+
 }

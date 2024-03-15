@@ -17,10 +17,8 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @RequiredArgsConstructor
@@ -45,14 +43,20 @@ public class FavoriteService {
       throw new CustomException(ALREADY_REGISTER_FAVORITE);
     }
 
-    Favorite favorite = new Favorite();
-    favorite.setMemberId(member.getId());
-    favorite.setRestaurantId(requestDto.getRestaurantId());
-    favorite.setCreatedDate(LocalDate.now());
+    Favorite favorite = getFavorite(requestDto,
+        member);
 
     Favorite savedFavorite = favoriteRepository.save(favorite);
     return new FavoriteResponseDto(savedFavorite.getId(), savedFavorite.getMemberId(),
         savedFavorite.getRestaurantId(), savedFavorite.getCreatedDate());
+  }
+
+  private Favorite getFavorite(FavoriteRequestDto requestDto, MemberEntity member) {
+    Favorite favorite = new Favorite();
+    favorite.setMemberId(member.getId());
+    favorite.setRestaurantId(requestDto.getRestaurantId());
+    favorite.setCreatedDate(LocalDate.now());
+    return favorite;
   }
 
   public List<FavoriteResponseDto> findAllFavoritesByMemberId(UserDetails userDetails) {
