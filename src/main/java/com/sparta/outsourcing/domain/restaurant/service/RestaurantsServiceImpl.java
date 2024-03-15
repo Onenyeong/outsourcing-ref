@@ -8,19 +8,16 @@ import com.sparta.outsourcing.domain.restaurant.dto.RestaurantsRequestDto;
 import com.sparta.outsourcing.domain.restaurant.dto.RestaurantsResponseDto;
 import com.sparta.outsourcing.domain.restaurant.entity.Restaurants;
 import com.sparta.outsourcing.domain.restaurant.repository.RestaurantsRepository;
+import com.sparta.outsourcing.domain.restaurant.repository.RestaurantsRepositoryCustom;
 import com.sparta.outsourcing.global.exception.CustomError;
 import com.sparta.outsourcing.global.exception.CustomException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestParam;
 
 @Service
 @RequiredArgsConstructor
@@ -28,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 public class RestaurantsServiceImpl implements RestaurantsService {
 
   private final RestaurantsRepository restaurantsRepository;
+  private final RestaurantsRepositoryCustom restaurantsRepositoryCustom;
   private final MemberRepository memberRepository;
   private final TransactionAspect transactionAspect;
   private final AopTimeAspect aopTimeAspect;
@@ -89,6 +87,14 @@ public class RestaurantsServiceImpl implements RestaurantsService {
     return restaurantsRepository.findAllByOrderByRestaurantId().stream()
         .map(RestaurantsResponseDto::new).toList();
   }
+// 생성자 주입과 빌더 패턴의차이
+  // 빌더가 유연할것같다 생성자 주입시 데이터 변경하면 생성자도 변경해야한다. 많이쓰는건 생성자 주입
+  // 둘다 결과는 같지만, 가시적으로 빌더가 유리하다. 절대적으로 데이터가 필요할땐 생성자주입으로하는게낫다.
+  // setter를 지양하지만 안쓰는건아니다. ex) 수정할게 너무많을때마다 메서드를 만들어서 데이터를 우회적으로 가져와야하니까 불편하다
+  // 무분별한 setter사용을 줄이자
+  // builder vs setter -> builder를 더 선호
+  // builder : private 데이터들의 집합체 (public), 어떤걸 세팅할지 명시적으로 보여줌
+  // setter : public 데이터를 set, 접근하기가 쉬움, 너무쉽게 바꿀수가있음,어떤 작업을 하는건지 잘 알수 없음
 
   /**
    *
@@ -107,18 +113,12 @@ public class RestaurantsServiceImpl implements RestaurantsService {
   }
 
   @Override
-  public Page<RestaurantsResponseDto> getRestaurantListByPage(@RequestParam(name = "page") int page, @RequestParam(name = "size") int size) {
-    Pageable pageRequest = createPageRequestUsing(page, size);
+  public List<RestaurantsResponseDto> findAllByRestaurantsPage(int page, int size) {
+    PageRequest pageRequest = PageRequest.of(page, size);
 
-    List<Restaurants> restaurantsList = restaurantsRepository.findAll();
-    int start = (int) pageRequest.getOffset();
-    int end = Math.min((start + pageRequest.getPageSize()), restaurantsList.size());
-
-    List<Restaurants> pageContent = restaurantsList.subList(start, end);
-    return new PageImpl<>(pageContent, pageRequest, restaurantsList.size());
+    return restaurantsRepositoryCustom.findAllByRestaurantsPage(pageRequest.getOffset(),pageRequest.getPageSize()).stream().map(RestaurantsResponseDto::new).collect(
+        Collectors.toList());
   }
-
-
 
   /**
    *
